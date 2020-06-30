@@ -43,7 +43,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
   std::normal_distribution<double> dist_theta(theta, std[2]);
   for (int i = 0; i < num_particles; ++i) {
     
-    // Sample from these normal distributions: 
+    // Sample from these normal distributions and add to particles vector: 
     Particle p;
     p.id = i;
     p.x = dist_x(gen);
@@ -139,30 +139,31 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
 
+  //calculate some initial parameters to use in weight update calculations
   double sig_x = std_landmark[0];
   double sig_y = std_landmark[1];
   double gauss_norm = 1 / (2 * M_PI * sig_x * sig_y);
   vector<Map::single_landmark_s> landmarks = map_landmarks.landmark_list;
   
   for(auto& p: particles){
-    
+    //initialize weights and extract key data
     p.weight = 1.0;
     double p_x = p.x;
     double p_y = p.y;
 	double p_theta = p.theta;
-    // step 1: collect valid landmarks
+    // get the landmarks within sensing distance
     vector<LandmarkObs> predictions;
     for(unsigned int j=0; j<landmarks.size(); ++j){
       //distance between particle and landmark
       double landmark_dist = dist(p_x, p_y, landmarks[j].x_f, landmarks[j].y_f);     
-      // select landmarks in sensor range
       
+      // select landmarks in sensor range      
       if(landmark_dist < sensor_range){              
         predictions.push_back(LandmarkObs{landmarks[j].id_i, landmarks[j].x_f, landmarks[j].y_f});
       } 
     }
 
-    // step 2: convert observations coordinates from vehicle to map
+    // transform observation position from vehicle to map coordinate
     vector<LandmarkObs> obs_m;
     LandmarkObs temp;
     
@@ -175,17 +176,15 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       obs_m.push_back(temp);
     }
 
-    // step 3: find landmark index for each observation
+    // find the closest landmark for each observation
     dataAssociation(predictions, obs_m);
 
-    // step 4: compute the particle's weight:
-    // see equation this link:
+    // update each particle's weight:
     double weight_upd = 1.0;
        for(unsigned int z=0; z<obs_m.size(); ++z){            
          //save observed landmark to nearist single landmark map type based on data association and use for calculation of weights
          
-         //Map index starts at 1, adjust to 0
-         Map::single_landmark_s obs_l = map_landmarks.landmark_list.at(obs_m[z].id-1);
+          Map::single_landmark_s obs_l = map_landmarks.landmark_list.at(obs_m[z].id-1);
          //Multivariate-Gaussian probability      
          double x_term = pow(obs_m[z].x - obs_l.x_f, 2) / (2*pow(sig_x, 2));
          double y_term = pow(obs_m[z].y - obs_l.y_f, 2) / (2*pow(sig_y, 2));
@@ -210,10 +209,12 @@ void ParticleFilter::resample() {
    *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
    */
   //std::cout << "particle weights resampling..." << std::endl;
+  
   std::random_device rd;
   std::mt19937 gen(rd());
   std::discrete_distribution<> distribution( weights.begin(), weights.end()) ;
   weights.clear();
+  
   // resample particles
   std::vector<Particle> resampled_particles;
   resampled_particles.resize(num_particles);
@@ -224,10 +225,7 @@ void ParticleFilter::resample() {
 
   // assign resampled_particles to particles
   particles = resampled_particles;
-  
-  weights.clear();
-    
-    
+
  // std::cout << "particles resampled" << std::endl;
 
 }
