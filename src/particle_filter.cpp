@@ -189,10 +189,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
          double x_term = pow(obs_m[z].x - obs_l.x_f, 2) / (2*pow(sig_x, 2));
          double y_term = pow(obs_m[z].y - obs_l.y_f, 2) / (2*pow(sig_y, 2));
          double w = gauss_norm*exp(-(x_term + y_term));
-//          std::cout << "Obs_measured x: " << obs_m[z].x << " Obs_measured y:  " << obs_m[z].y << std::endl;
-//          std::cout << "Obs_landmark x: " << obs_l.x_f << " Obs_landmark y:  " << obs_l.y_f << std::endl;
-//          std::cout << "x term: " << x_term << " y term: " << y_term << " gaussian norm: " << gauss_norm << std::endl;
-//          std::cout << "weight" << z << ": " << w << std::endl;
+         
             weight_upd *= w;
        }   
     p.weight = weight_upd;
@@ -208,7 +205,6 @@ void ParticleFilter::resample() {
    * NOTE: You may find std::discrete_distribution helpful here.
    *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
    */
-  //std::cout << "particle weights resampling..." << std::endl;
   
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -226,7 +222,6 @@ void ParticleFilter::resample() {
   // assign resampled_particles to particles
   particles = resampled_particles;
 
- // std::cout << "particles resampled" << std::endl;
 
 }
 
